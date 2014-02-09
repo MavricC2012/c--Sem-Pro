@@ -1,0 +1,77 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+
+namespace login
+{
+    public partial class controlForm : Form
+    {
+        private string Clearence;
+
+        public controlForm()
+        {
+            InitializeComponent();
+        }
+
+        public controlForm(string CL)
+        {
+            InitializeComponent();
+
+            this.Clearence = CL;
+        }
+
+        private void controlForm_Load(object sender, EventArgs e)
+        {
+            if (Clearence != "0")
+            {
+                btnAdd.Enabled = false;
+                btnUpdate.Enabled = false;
+                btnDelete.Enabled = false;
+            }
+        }
+
+        private void btnUpdate_Click(object sender, EventArgs e)
+        {
+            updateForm frm = new updateForm();
+            frm.ShowDialog();
+        }
+
+        private void btnAdd_Click(object sender, EventArgs e)
+        {
+            addForm frm = new addForm();
+            frm.ShowDialog();
+        }
+
+        private void btnDelete_Click(object sender, EventArgs e)
+        {
+            deleteForm frm = new deleteForm();
+            frm.ShowDialog();
+        }
+
+        private void btnCalculate_Click(object sender, EventArgs e)
+        {
+            calcPayForm frm = new calcPayForm();
+            frm.ShowDialog();
+        }
+
+        private void btnLogout_Click(object sender, EventArgs e)
+        {            
+            Application.Restart();            
+        }
+
+        private void btnTerm_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
+
+        private void controlForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            Application.Exit();
+        }
+    }
+}
