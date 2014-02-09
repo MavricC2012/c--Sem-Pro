@@ -1,0 +1,71 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using System.Data.SqlClient;
+
+namespace login
+{
+    public partial class CheckDelete : Form
+    {
+        private employee currentEmployee;
+
+        private bool isIgnore;
+
+        private string strEmpID;
+
+        public CheckDelete()
+        {
+            InitializeComponent();
+        }
+
+        public CheckDelete(employee currentEmployee)
+        {
+            InitializeComponent();
+            this.currentEmployee = currentEmployee;
+        }
+
+        public CheckDelete(string strEmpID)
+        {
+            this.strEmpID = strEmpID;
+
+            InitializeComponent();
+        }
+
+        private void btnConfirm_Click(object sender, EventArgs e)
+        {
+            currentEmployee.delete();
+
+            if (chkIgnore.Checked)
+            {
+                isIgnore = true;
+            }
+
+            var result = MessageBox.Show("Employee" + " " + currentEmployee.StrID + " " + "has been deleted.", "Employee Deleted", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+            if (result == DialogResult.OK)
+            {
+                this.Close();
+
+                deleteForm deleted = new deleteForm();
+                deleted.Show();
+            }
+        }
+
+        private void btnCancle_Click(object sender, EventArgs e)
+        { 
+            MessageBox.Show("Employee" + " " + currentEmployee.StrID + " " + "has not been deleted.", "Employee Not Deleted", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+            this.Close();
+            /*if (result == DialogResult.OK)
+            {
+                this.Close();
+
+                deleteForm deleted = new deleteForm();
+                deleted.Show();
+            }*/
+        }
+    }
+}
