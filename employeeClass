@@ -1,0 +1,141 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Data.SqlClient;
+using System.Data;
+
+namespace login
+{
+    public class employee
+    {
+        public employee()
+        {
+        }
+        private string strID;
+
+        public string StrID
+        {
+            get { return strID; }
+            set { strID = value; }
+        }
+        private string strFirst;
+
+        public string StrFirst
+        {
+            get { return strFirst; }
+            set { strFirst = value; }
+        }
+        private string strLast;
+
+        public string StrLast
+        {
+            get { return strLast; }
+            set { strLast = value; }
+        }
+        private string strPhone;
+
+        public string StrPhone
+        {
+            get { return strPhone; }
+            set { strPhone = value; }
+        }
+        private string strEmail;
+
+        public string StrEmail
+        {
+            get { return strEmail; }
+            set { strEmail = value; }
+        }
+        private string strAddress;
+
+        public string StrAddress
+        {
+            get { return strAddress; }
+            set { strAddress = value; }
+        }
+        private float fltWage;
+
+        public float FltWage
+        {
+            get { return fltWage; }
+            set { fltWage = value; }
+        }
+        private string strTitle;
+
+        public string StrTitle
+        {
+            get { return strTitle; }
+            set { strTitle = value; }
+        }
+        private string strZip;
+
+        public string StrZip
+        {
+            get { return strZip; }
+            set { strZip = value; }
+        }
+        private string strDOB;
+
+        public string StrDOB
+        {
+            get { return strDOB; }
+            set { strDOB = value; }
+        }
+
+        public void delete() 
+        {
+            string connectionString = "Data Source=UAM-CIS1\\SQLEXPRESS; Initial Catalog=SEM_PRO_WEYSHAM; Integrated Security=True";
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+
+                SqlCommand myCommand = new SqlCommand("DELETE FROM employee WHERE emp_id = @EmpID", connection);
+                myCommand.Parameters.Add("@EmpID", SqlDbType.Char, 3).Value = this.StrID;
+
+                myCommand.ExecuteNonQuery();
+
+                connection.Close();
+            }
+        }
+
+        public void update()
+        {
+            string connectionString = "Data Source=UAM-CIS1\\SQLEXPRESS; Initial Catalog=SEM_PRO_WEYSHAM; Integrated Security=True";
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+
+                SqlCommand myCommand = new SqlCommand("DELETE FROM employee WHERE emp_id = @EmpID", connection);
+                myCommand.Parameters.Add("@EmpID", SqlDbType.Char, 3).Value = this.StrID;
+
+                myCommand.ExecuteNonQuery();
+
+                connection.Close();
+            }
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+
+                SqlCommand myInsert = new SqlCommand("INSERT INTO employee VALUES(@EmpID, @First, @Last, @Phone, @eMail, @Zip, @Address, @Wage, @Title, @DOB)", connection);
+                myInsert.Parameters.Add("@EmpID", SqlDbType.Char, 3).Value = this.StrID;
+                myInsert.Parameters.Add("@First", SqlDbType.VarChar, 20).Value = this.StrFirst;
+                myInsert.Parameters.Add("@Last", SqlDbType.VarChar, 20).Value = this.StrLast;
+                myInsert.Parameters.Add("@Phone", SqlDbType.Char, 10).Value = this.StrPhone;
+                myInsert.Parameters.Add("@Email", SqlDbType.VarChar, 35).Value = this.StrEmail;
+                myInsert.Parameters.Add("@Address", SqlDbType.VarChar, 35).Value = this.StrAddress;
+                myInsert.Parameters.Add("@Zip", SqlDbType.Char, 5).Value = this.StrZip;
+                myInsert.Parameters.Add("@DOB", SqlDbType.DateTime).Value = this.StrDOB;
+                myInsert.Parameters.Add("@Title", SqlDbType.VarChar, 10).Value = this.StrTitle;
+                myInsert.Parameters.Add("@Wage", SqlDbType.Money).Value = this.FltWage;
+
+                myInsert.ExecuteNonQuery();
+
+                connection.Close();
+            }
+        }
+    }
+}
