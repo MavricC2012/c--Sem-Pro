@@ -1,0 +1,173 @@
+/* 
+ * Password Hashing With PBKDF2 (http://crackstation.net/hashing-security.htm).
+ * Copyright (c) 2013, Taylor Hornby
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without 
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, 
+ * this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation 
+ * and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" 
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE 
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using System.Security.Cryptography;
+using System.Data.SqlClient;
+
+namespace login
+{
+    public partial class loginForm : Form
+    {
+        private bool isValid = false;
+
+        private string ControlLevel;
+
+        //Following code is for validating pw
+        //*****************************************************************************************
+
+        public const int ITERATION_INDEX = 0;
+        public const int SALT_INDEX = 1;
+        public const int PBKDF2_INDEX = 2;
+
+        /// <summary>
+        /// Validates a password given a hash of the correct one.
+        /// </summary>
+        /// <param name="password">The password to check.</param>
+        /// <param name="correctHash">A hash of the correct password.</param>
+        /// <returns>True if the password is correct. False otherwise.</returns>
+        public static bool ValidatePassword(string password, string correctHash)
+        {
+            // Extract the parameters from the hash
+            char[] delimiter = { ':' };
+            string[] split = correctHash.Split(delimiter);
+            int iterations = Int32.Parse(split[ITERATION_INDEX]);
+            byte[] salt = Convert.FromBase64String(split[SALT_INDEX]);
+            byte[] hash = Convert.FromBase64String(split[PBKDF2_INDEX]);
+
+            byte[] testHash = PBKDF2(password, salt, iterations, hash.Length);
+            return SlowEquals(hash, testHash);
+        }
+
+        /// <summary>
+        /// Compares two byte arrays in length-constant time. This comparison
+        /// method is used so that password hashes cannot be extracted from
+        /// on-line systems using a timing attack and then attacked off-line.
+        /// </summary>
+        /// <param name="a">The first byte array.</param>
+        /// <param name="b">The second byte array.</param>
+        /// <returns>True if both byte arrays are equal. False otherwise.</returns>
+        private static bool SlowEquals(byte[] a, byte[] b)
+        {
+            uint diff = (uint)a.Length ^ (uint)b.Length;
+            for (int i = 0; i < a.Length && i < b.Length; i++)
+                diff |= (uint)(a[i] ^ b[i]);
+            return diff == 0;
+        }
+
+        /// <summary>
+        /// Computes the PBKDF2-SHA1 hash of a password.
+        /// </summary>
+        /// <param name="password">The password to hash.</param>
+        /// <param name="salt">The salt.</param>
+        /// <param name="iterations">The PBKDF2 iteration count.</param>
+        /// <param name="outputBytes">The length of the hash to generate, in bytes.</param>
+        /// <returns>A hash of the password.</returns>
+        private static byte[] PBKDF2(string password, byte[] salt, int iterations, int outputBytes)
+        {
+            Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(password, salt);
+            pbkdf2.IterationCount = iterations;
+            return pbkdf2.GetBytes(outputBytes);
+        }
+
+        //**********************************************************************************************
+        public loginForm()
+        {
+            InitializeComponent();
+        }
+
+        public bool isValidLogin()
+        {
+            return isValid;
+        }
+
+        public string CL()
+        {
+            return ControlLevel;
+        }
+
+        private void btnLogin_Click(object sender, EventArgs e)
+        {           
+            string strUN;
+            string strPW;
+            string strHashPW;
+
+            strUN = txtUN.Text;
+            strPW = txtPW.Text;
+
+            string connectionString = "Data Source=UAM-CIS1\\SQLEXPRESS; Initial Catalog=SEM_PRO_WEYSHAM; Integrated Security=True";
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+
+                SqlDataReader myReader = null;
+
+                SqlCommand myCommand = new SqlCommand("SELECT user_id, user_cl, user_pw FROM account_info WHERE user_id = @UN", connection);
+                myCommand.Parameters.Add("@UN", SqlDbType.Char, 5).Value = strUN;
+
+                myReader = myCommand.ExecuteReader();
+                while (myReader.Read())
+                {
+                    strHashPW = myReader["user_pw"].ToString();
+
+                    ControlLevel = myReader["user_cl"].ToString();
+
+                    isValid = ValidatePassword(strPW, strHashPW);
+                }
+                
+                connection.Close();
+            }
+            if (isValid)
+            {
+                this.Close();
+            }
+            else
+            {
+                var result = MessageBox.Show("Invalid Username or Password. Click retry to re-enter data or cancle to quit program.", "Invalid Credentials", MessageBoxButtons.RetryCancel, MessageBoxIcon.Exclamation);
+                if (result == DialogResult.Retry)
+                {
+                    txtUN.Clear();
+                    txtPW.Clear();
+
+                    txtUN.Focus();
+                }
+                else if (result == DialogResult.Cancel)
+                {
+                    this.Close();
+                }
+            }
+        }
+    }
+}
