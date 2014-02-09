@@ -1,0 +1,162 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using System.Data.SqlClient;
+
+namespace login
+{
+    public partial class confirmUpdate : Form
+    {
+        private employee changedEmployee;
+
+        private employee currentEmployee;
+
+        private string strUpdateSet;
+
+        private bool isIDChanged = false;
+        private bool isFstChg = false;
+        private bool isLstChg = false;
+        private bool isPhnChg = false;
+        private bool isEmlChg = false;
+        private bool isAdrChg = false;
+        private bool isZipChg = false;
+        private bool isDOBChg = false;
+        private bool isWgeChg = false;
+        private bool isTtlChg = false;
+
+        public confirmUpdate()
+        {
+            InitializeComponent();
+        }
+
+        public confirmUpdate(employee changedEmployee, employee currentEmployee, bool isIDChanged, bool isFstChg, bool isLstChg, bool isPhnChg, bool isEmlChg, bool isAdrChg, bool isZipChg, bool isDOBChg, bool isWgeChg, bool isTtlChg)
+        {
+            InitializeComponent();
+            this.changedEmployee = changedEmployee;
+
+            this.currentEmployee = currentEmployee;
+
+            this.isIDChanged = isIDChanged;
+            this.isFstChg = isFstChg;
+            this.isLstChg = isLstChg;
+            this.isPhnChg = isPhnChg;
+            this.isEmlChg = isEmlChg;
+            this.isAdrChg = isAdrChg;
+            this.isZipChg = isZipChg;
+            this.isDOBChg = isDOBChg;
+            this.isWgeChg = isWgeChg;
+            this.isTtlChg = isTtlChg;
+        }
+        
+        private void btnConfirm_Click(object sender, EventArgs e)
+        {
+            changedEmployee.update();
+
+            MessageBox.Show("Employee" + " " + currentEmployee.StrID + " " + "has been updated.", "Employee Updated", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+
+            this.Close();
+        }
+
+        private void confirmUpdate_Load(object sender, EventArgs e)
+        {
+            if (isIDChanged)
+            {
+                lblEmpUp.BackColor = Color.Yellow;
+                lblEmpUp.ForeColor = Color.Maroon;
+
+                lblOrgID.Text = currentEmployee.StrID.ToString();
+            }
+
+            if (isFstChg)
+            {
+                lblNameUp.BackColor = Color.Yellow;
+                lblNameUp.ForeColor = Color.Maroon;
+
+                strUpdateSet = strUpdateSet + "emp_first_name = @First, ";
+
+                lblOrigFirst.Text = currentEmployee.StrFirst.ToString();
+            }
+
+            if (isLstChg)
+            {
+                lblLastUp.BackColor = Color.Yellow;
+                lblLastUp.ForeColor = Color.Maroon;
+
+                strUpdateSet = strUpdateSet + "emp_first_name = @Last, ";
+
+                lblOrigLast.Text = currentEmployee.StrLast.ToString();
+            }
+
+            if (isPhnChg)
+            {
+                lblPhoneUp.BackColor = Color.Yellow;
+                lblPhoneUp.ForeColor = Color.Maroon;
+
+                strUpdateSet = strUpdateSet + "emp_first_name = @Phone, ";
+
+                lblOrigPhone.Text = currentEmployee.StrPhone.ToString();
+            }
+
+            if (isEmlChg)
+            {
+                lblEmailUp.BackColor = Color.Yellow;
+                lblEmailUp.ForeColor = Color.Maroon;
+
+                strUpdateSet = strUpdateSet + "emp_first_name = @Email, ";
+
+                lblOrigEmail.Text = currentEmployee.StrEmail.ToString();
+            }
+
+            if (isAdrChg)
+            {
+                lblAddressUp.BackColor = Color.Yellow;
+                lblAddressUp.ForeColor = Color.Maroon;
+
+                strUpdateSet = strUpdateSet + "emp_first_name = @Address, ";
+
+                lblOrigAddr.Text = currentEmployee.StrAddress.ToString();
+            }
+
+            if (isZipChg)
+            {
+                lblZipUp.BackColor = Color.Yellow;
+                lblZipUp.ForeColor = Color.Maroon;
+
+                strUpdateSet = strUpdateSet + "emp_first_name = @Zip, ";
+
+                lblOrigZip.Text = currentEmployee.StrZip.ToString();
+            }
+
+            if (isZipChg)
+            {
+                lblZipUp.BackColor = Color.Yellow;
+                lblZipUp.ForeColor = Color.Maroon;
+
+                strUpdateSet = strUpdateSet + "emp_first_name = @Zip, ";
+
+                lblOrigZip.Text = currentEmployee.StrZip.ToString();
+            }
+
+            lblEmpUp.Text = changedEmployee.StrID.ToString();
+            lblNameUp.Text = changedEmployee.StrFirst.ToString();
+            lblLastUp.Text = changedEmployee.StrLast.ToString();
+            lblPhoneUp.Text = changedEmployee.StrPhone.ToString();
+            lblEmailUp.Text = changedEmployee.StrEmail.ToString();
+            lblZipUp.Text = changedEmployee.StrZip.ToString();
+            lblAddressUp.Text = changedEmployee.StrAddress.ToString();
+            lblWageUp.Text = changedEmployee.FltWage.ToString("C");
+            lblTitleUp.Text = changedEmployee.StrTitle.ToString();
+            lblDOBUp.Text = changedEmployee.StrDOB.ToString();
+        }
+
+        private void btnCancel_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+    }
+}
