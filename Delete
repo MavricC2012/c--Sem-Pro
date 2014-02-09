@@ -1,0 +1,184 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using System.Data.SqlClient;
+
+namespace login
+{
+    public partial class deleteForm : Form
+    {
+        private employee currentEmployee;
+
+        private bool isIgnore;
+
+        private bool isExit = true;
+
+        public deleteForm()
+        {
+            InitializeComponent();
+            currentEmployee = new employee();
+        }
+
+        public deleteForm(bool isIgnore)
+        {
+            this.isIgnore = isIgnore;
+            InitializeComponent();
+        }
+
+        private void btnReturn_Click(object sender, EventArgs e)
+        {
+            isExit = false;
+
+            isIgnore = false;
+
+            this.Close();
+        }
+
+        private void btnFind_Click(object sender, EventArgs e)
+        {
+            txtOutID.Clear();
+            txtOutFirst.Clear();
+            txtOutLast.Clear();
+            txtOutPhone.Clear();
+            txtOutEmail.Clear();
+            txtZip.Clear();
+            txtOutAddress.Clear();
+            txtOutWage.Clear();
+            txtOutTitle.Clear();
+            txtOutDOB.Clear();
+
+            txtCriteria.Focus();
+
+            string connectionString = "Data Source=UAM-CIS1\\SQLEXPRESS; Initial Catalog=SEM_PRO_WEYSHAM; Integrated Security=True";
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                
+                string EmpIDIn;
+                bool idExists = false;
+
+                EmpIDIn = txtCriteria.Text;
+
+                connection.Open();
+
+                SqlParameter myParam2 = new SqlParameter("@EmpID", SqlDbType.VarChar, 3);
+                myParam2.Value = EmpIDIn;
+
+                using (SqlCommand IDCheck = new SqlCommand("select count(*) from employee where emp_id = @EmpID", connection))
+                {
+                    IDCheck.Parameters.Add("@EmpID", SqlDbType.Char, 3).Value = EmpIDIn;
+                    idExists = (int)IDCheck.ExecuteScalar() > 0;
+                }
+
+                if (!idExists)
+                {
+                    MessageBox.Show("Employee ID id not found, enter a valid employee id.", "Employee ID Not Found", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+
+                    txtCriteria.Clear();
+
+                    txtCriteria.Focus();
+                }
+
+                SqlDataReader myReader = null;
+
+                SqlCommand myCommand = new SqlCommand("SELECT emp_id, emp_first_name, emp_last_name, emp_phone, emp_email, emp_zip, emp_address, emp_wage, emp_title, emp_DOB FROM employee WHERE emp_id = @EmpID", connection);
+                myCommand.Parameters.Add(myParam2);
+
+                myReader = myCommand.ExecuteReader();
+                while (myReader.Read())
+                {
+                    currentEmployee.StrID = myReader["emp_id"].ToString();
+                    currentEmployee.StrFirst = myReader["emp_first_name"].ToString();
+                    currentEmployee.StrLast = myReader["emp_last_name"].ToString();
+                    currentEmployee.StrPhone = myReader["emp_phone"].ToString();
+                    currentEmployee.StrEmail = myReader["emp_email"].ToString();
+                    currentEmployee.StrZip = myReader["emp_zip"].ToString();
+                    currentEmployee.StrAddress = myReader["emp_address"].ToString();
+                    currentEmployee.FltWage = float.Parse(myReader["emp_wage"].ToString());
+                    currentEmployee.StrTitle = myReader["emp_title"].ToString();
+                    currentEmployee.StrDOB = myReader["emp_DOB"].ToString();
+
+                    txtOutID.Text = currentEmployee.StrID.ToString();
+                    txtOutFirst.Text = currentEmployee.StrFirst.ToString();
+                    txtOutLast.Text = currentEmployee.StrLast.ToString();
+                    txtOutPhone.Text = currentEmployee.StrPhone.ToString();
+                    txtOutEmail.Text = currentEmployee.StrEmail.ToString();
+                    txtZip.Text = currentEmployee.StrZip.ToString();
+                    txtOutAddress.Text = currentEmployee.StrAddress.ToString();
+                    txtOutWage.Text = currentEmployee.FltWage.ToString("C");
+                    txtOutTitle.Text = currentEmployee.StrTitle.ToString();
+                    txtOutDOB.Text = currentEmployee.StrDOB.ToString();
+                }
+                connection.Close();
+            }
+        }
+
+        private void btnTerm_Click(object sender, EventArgs e)
+        {
+            var result = MessageBox.Show("Are you sure you wish to close the application?", "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
+            {
+                Application.Exit();
+            }
+        }
+
+        private void btnDelete_Click(object sender, EventArgs e)
+        {
+            if (txtOutID.Text != "")
+            {
+                if (isIgnore)
+                {
+                    currentEmployee.delete();
+
+                    var result = MessageBox.Show("Employee" + " " + currentEmployee.StrID + " " + "has been deleted.", "Employee Deleted", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+
+                    if (result == DialogResult.OK)
+                    {
+                        txtOutID.Clear();
+                        txtOutFirst.Clear();
+                        txtOutLast.Clear();
+                        txtOutPhone.Clear();
+                        txtOutEmail.Clear();
+                        txtZip.Clear();
+                        txtOutAddress.Clear();
+                        txtOutWage.Clear();
+                        txtOutTitle.Clear();
+                        txtOutDOB.Clear();
+                        txtCriteria.Clear();
+
+                        txtCriteria.Focus();
+                    }
+
+                }
+                else
+                {
+                    CheckDelete chk = new CheckDelete(currentEmployee);
+
+                    this.Refresh();
+
+                    chk.ShowDialog();                   
+                }
+            }  
+            else 
+            {
+                MessageBox.Show("Please enter a valid employee id, and click find.", "User ID not Found", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+
+                txtCriteria.Focus();
+            }
+        }
+
+        private void deleteForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (isExit)
+            {
+                Application.Exit();
+            }
+        }
+    }
+}
