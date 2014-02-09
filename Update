@@ -1,0 +1,491 @@
+// Programmed by:                       Craig Weysham
+// Program name:                        employee_management_program
+// Program description:                 To allow an admin to modify employee data and update time sheet, or to allow an employee update their own time sheet.
+// Program purpose:                     To allow for maintenece of employee data and updating of time sheets.
+// Date created:                        11/18/2013
+// Date modified:                       12/10/2013
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using System.Text.RegularExpressions;
+using System.Data.SqlClient;
+
+
+namespace login
+{
+    public partial class updateForm : Form
+    {
+        // Declares a new instance of the employee class
+        private employee currentEmployee;
+
+        // Declares a new instance of the employee class
+        private employee changedEmployee;
+
+        // Declares boolean variable to be used as checks
+        private bool isExit = true;
+
+        private bool isIDChanged = false;
+        private bool isFstChg = false;
+        private bool isLstChg = false;
+        private bool isPhnChg = false;
+        private bool isEmlChg = false;
+        private bool isAdrChg = false;
+        private bool isZipChg = false;
+        private bool isDOBChg = false;
+        private bool isWgeChg = false;
+        private bool isTtlChg = false;
+
+        private string strMonth;
+        private int intYear;
+        private bool isLeap = false;
+
+        public updateForm()
+        {
+            InitializeComponent();
+            // Initializes the instance of the new employee classes
+            currentEmployee = new employee();
+            changedEmployee = new employee();
+        }
+
+        private void btnReturn_Click(object sender, EventArgs e)
+        {
+            // closes the form and returns to the main form
+            isExit = false;
+
+            this.Close();
+
+        }
+
+        private void btnFind_Click(object sender, EventArgs e)
+        {           
+            // Clears the form of data and sets focus to the criteria
+            /***********************************************************************************************/
+            txtOutID.Clear();
+            txtOutFirst.Clear();
+            txtOutLast.Clear();
+            txtOutPhone.Clear();
+            txtOutEmail.Clear();
+            txtZip.Clear();
+            txtOutAddress.Clear();
+            txtOutWage.Clear();
+            txtOutTitle.Clear();
+            this.cboYear.Items.Clear();
+            this.cboDay.Items.Clear();
+
+            txtCriteria.Focus();
+            /***********************************************************************************************/
+
+            // Populates the Year ComboBox, 1920 until the current year - 18
+            /***********************************************************************************************/
+            int intCurrentYear;
+            int intMaxYear;
+
+            intCurrentYear = DateTime.Now.Year;
+
+            intMaxYear = intCurrentYear - 18;
+
+            for (int k = 1920; k < intMaxYear; k++)
+            {
+                cboYear.Items.Add(k + 1);
+            }
+            /***********************************************************************************************/
+
+            // Sets a string to a data connection string
+            /***********************************************************************************************/
+            string connectionString = "Data Source=UAM-CIS1\\SQLEXPRESS; Initial Catalog=SEM_PRO_WEYSHAM; Integrated Security=True";
+            /***********************************************************************************************/
+
+            // Uses the connection string to create a new connection to the database, any code within uses the connection. The connection is closed
+            // after all code is executed within the using.
+            /***********************************************************************************************/
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                string EmpIDIn;
+                bool idExists = false;
+
+                EmpIDIn = txtCriteria.Text;
+
+                // Opens the connection
+                connection.Open();
+
+                // Declares a new parameter to receive a value stored in a variable, allows a variable to be used to access the database.
+                SqlParameter parEmpId = new SqlParameter("@EmpID", SqlDbType.VarChar, 3);
+                parEmpId.Value = EmpIDIn;
+
+                // Uses a command to check to see if there is any occurrences of the specified emp_id. Sets idExists to true if there are any occurrences of the id.
+                /***********************************************************************************************/
+                using (SqlCommand IDCheck = new SqlCommand("select count(*) from employee where emp_id = @EmpID", connection))
+                {
+                    IDCheck.Parameters.Add("@EmpID", SqlDbType.Char, 3).Value = EmpIDIn;
+                    idExists = (int)IDCheck.ExecuteScalar() > 0;
+                }
+                /***********************************************************************************************/
+
+                // Checks if id does not exist, if it does not exist then diplays a message otherwise it populates the form.
+                /***********************************************************************************************/
+                if (!idExists)
+                {
+                    MessageBox.Show("Employee ID id not found, enter a valid employee id.", "Employee ID Not Found", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+
+                    txtCriteria.Clear();
+
+                    txtCriteria.Focus();
+                }
+                else
+                {
+                    // enables the form fields to be editable
+                    txtOutFirst.Enabled = true;
+                    txtOutLast.Enabled = true;
+                    txtOutPhone.Enabled = true;
+                    txtOutEmail.Enabled = true;
+                    txtZip.Enabled = true;
+                    txtOutAddress.Enabled = true;
+                    txtOutWage.Enabled = true;
+                    txtOutTitle.Enabled = true;
+                    cboYear.Enabled = true;
+                    cboMonth.Enabled = true;
+                    cboDay.Enabled = true;
+
+                    // initializes a sql data reader
+                    SqlDataReader empReader = null;
+
+                    // Building the command to import data from the employee table based on the inserted employee id
+                    SqlCommand myCommand = new SqlCommand("SELECT emp_id, emp_first_name, emp_last_name, emp_phone, emp_email, emp_zip, emp_address, emp_wage, emp_title, emp_DOB FROM employee WHERE emp_id = @EmpID", connection);
+                    myCommand.Parameters.Add(parEmpId);
+
+                    // Executes the sql data reader using the SQL select command, sets the results to the appropiate variables.
+                    empReader = myCommand.ExecuteReader();
+                    while (empReader.Read())
+                    {
+                        // Sets the result of the read to variables declared in the currentEmployee instance of the employee class
+                        currentEmployee.StrID = empReader["emp_id"].ToString();
+                        currentEmployee.StrFirst = empReader["emp_first_name"].ToString();
+                        currentEmployee.StrLast = empReader["emp_last_name"].ToString();
+                        currentEmployee.StrPhone = empReader["emp_phone"].ToString();
+                        currentEmployee.StrEmail = empReader["emp_email"].ToString();
+                        currentEmployee.StrZip = empReader["emp_zip"].ToString();
+                        currentEmployee.StrAddress = empReader["emp_address"].ToString();
+                        currentEmployee.FltWage = float.Parse(empReader["emp_wage"].ToString());
+                        currentEmployee.StrTitle = empReader["emp_title"].ToString();
+                        currentEmployee.StrDOB = empReader["emp_DOB"].ToString();
+
+                        // Declares and fills an array by splitting the value within currentEmployee.StrDOB, deliminated by a space (to get rid of the time stamp)
+                        string[] splitDOB = currentEmployee.StrDOB.Split(' ');
+
+                        // Declares and fills an array by splitting the value held in the first array spot of splitDOB, deliminated by the / (to split a date into three parts, mm/dd/yyyy)
+                        string[] DOB = splitDOB[0].Split('/');
+
+                        // Outputs the result of the SQL select
+                        txtOutID.Text = currentEmployee.StrID.ToString();
+                        txtOutFirst.Text = currentEmployee.StrFirst.ToString();
+                        txtOutLast.Text = currentEmployee.StrLast.ToString();
+                        txtOutPhone.Text = currentEmployee.StrPhone.ToString();
+                        txtOutEmail.Text = currentEmployee.StrEmail.ToString();
+                        txtZip.Text = currentEmployee.StrZip.ToString();
+                        txtOutAddress.Text = currentEmployee.StrAddress.ToString();
+                        txtOutWage.Text = currentEmployee.FltWage.ToString("C");
+                        txtOutTitle.Text = currentEmployee.StrTitle.ToString();
+                        
+                        //outputs the year to the combo box. Calls the popYearDay function to populate the day combo box with the appropiate days.
+                        cboYear.Text = DOB[2];
+                        popYearDay();
+
+                        // Checks the first value in the variable to see if it is a 0, if so it uses the second value and subtracts 1 to create the selected index of the combo box
+                        // else it uses the current value minus one to set the index value of the month. (Since month is string, this allows it to be set based on input)
+                        if (int.Parse(DOB[0].Substring(0, 1)) == 0)
+                        {
+                            cboMonth.SelectedIndex = int.Parse(DOB[0].Substring(1, 2)) - 1;
+                        }
+                        else
+                        {
+                            cboMonth.SelectedIndex = int.Parse(DOB[0]) - 1;
+                        }
+
+                        // Outputs the day to the day combo box
+                        cboDay.Text = DOB[1];                        
+                    }
+                    connection.Close();
+                }
+                /***********************************************************************************************/               
+            }
+            /***********************************************************************************************/
+        }
+
+        private void btnTerm_Click(object sender, EventArgs e)
+        {
+            // Asks the user if they want to exit, if they select yes the application closes if they select no it remains open. (Quick escape)
+            var result = MessageBox.Show("Are you sure you wish to close the application?", "Confirm", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
+            {
+                Application.Exit();
+            }
+        }
+
+        // The following leave events check to see if anything has been changed on the form, if a change occured trigger the bool variable to true
+        /***********************************************************************************************/
+        private void txtOutID_Leave(object sender, EventArgs e)
+        {
+            isIDChanged = false;
+
+            if (currentEmployee.StrID != txtOutID.Text)
+            {
+                isIDChanged = true;
+            }
+        }
+
+        private void txtOutFirst_Leave(object sender, EventArgs e)
+        {
+            isFstChg = false;
+
+            if (currentEmployee.StrFirst != txtOutFirst.Text)
+            {
+                isFstChg = true;
+            }
+        }
+
+        private void txtOutLast_Leave(object sender, EventArgs e)
+        {
+            isLstChg = false;
+
+            if (currentEmployee.StrLast != txtOutLast.Text)
+            {
+                isLstChg = true;
+            }
+        }
+
+        private void txtOutPhone_Leave(object sender, EventArgs e)
+        {
+            isPhnChg = false;
+
+            if (currentEmployee.StrPhone != txtOutPhone.Text)
+            {
+                isPhnChg = true;
+            }
+        }
+
+        private void txtOutEmail_Leave(object sender, EventArgs e)
+        {
+            isEmlChg = false;
+
+            if (currentEmployee.StrEmail != txtOutEmail.Text)
+            {
+                isEmlChg = true;
+            }
+        }
+
+        private void txtOutAddress_Leave(object sender, EventArgs e)
+        {
+            isAdrChg = false;
+
+            if (currentEmployee.StrAddress != txtOutAddress.Text)
+            {
+                isAdrChg = true;
+            }
+        }
+
+        private void txtZip_Leave(object sender, EventArgs e)
+        {
+            isZipChg = false;
+            string strCheckZip;
+
+            if (currentEmployee.StrZip != txtZip.Text)
+            {
+                isZipChg = true;
+            }
+
+            // Checks to see if there are any occurrences of the new zip in the database
+            /***********************************************************************************************/
+            strCheckZip = txtZip.Text;
+
+            string connectionString = "Data Source=UAM-CIS1\\SQLEXPRESS; Initial Catalog=SEM_PRO_WEYSHAM; Integrated Security=True";
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                bool zipExists = false;
+
+                connection.Open();
+                using (SqlCommand IDCheck = new SqlCommand("select count(*) from city where city_zip = @Zip", connection))
+                {
+                    IDCheck.Parameters.Add("@Zip", SqlDbType.Char, 5).Value = strCheckZip;
+                    zipExists = (int)IDCheck.ExecuteScalar() > 0;
+                }
+                if (!zipExists)
+                {
+                    MessageBox.Show("Zip code not recognized.", "Invalid Zip Code", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+                    txtZip.Focus();
+                    txtZip.BackColor = Color.MistyRose;
+                }
+                else
+                {
+                    txtZip.BackColor = Color.White;
+                }
+                connection.Close();
+            }
+            /***********************************************************************************************/
+        }
+
+        private void txtOutWage_Leave(object sender, EventArgs e)
+        {
+            string strWageHolder;
+            float fltNewWage;
+
+            isWgeChg = false;
+
+            // Replaces the wage from a ($9.99) format to a (9.99) format by removing the $ sign
+            strWageHolder = txtOutWage.Text;
+            string replacedWage = strWageHolder.Replace("$", "");
+            fltNewWage = float.Parse(replacedWage);
+
+            if (currentEmployee.FltWage != fltNewWage)
+            {
+                isZipChg = true;
+            }
+        }
+
+        private void txtOutTitle_Leave(object sender, EventArgs e)
+        {
+            isTtlChg = false;
+
+            if (currentEmployee.StrTitle != txtOutTitle.Text)
+            {
+                isTtlChg = true;
+            }
+        }
+        /***********************************************************************************************/
+
+        private void btnUpdate_Click(object sender, EventArgs e)
+        {               
+            string strWageHolder;
+            int intMonthVal;
+
+            // Sets the changed variables to the values in the text boxes at the time of button click
+            changedEmployee.StrID = txtOutID.Text;
+            changedEmployee.StrFirst = txtOutFirst.Text;
+            changedEmployee.StrLast = txtOutLast.Text;
+            changedEmployee.StrPhone = txtOutPhone.Text;
+            changedEmployee.StrEmail = txtOutEmail.Text;
+            changedEmployee.StrZip = txtZip.Text;
+            changedEmployee.StrAddress = txtOutAddress.Text;
+            strWageHolder = txtOutWage.Text;
+            string replacedWage = strWageHolder.Replace("$", "");
+            changedEmployee.FltWage = float.Parse(replacedWage);
+            changedEmployee.StrTitle = txtOutTitle.Text;
+            intMonthVal = cboMonth.SelectedIndex + 1;
+            changedEmployee.StrDOB = intMonthVal + "/" + cboDay.SelectedItem + "/" + cboYear.SelectedItem;
+
+            // Prepares the confirmUpdate form to be opened. Opens the new form as a dialog box so the parent form is not accessable.
+            confirmUpdate update = new confirmUpdate(changedEmployee, currentEmployee, isIDChanged, isFstChg, isLstChg, isPhnChg, isEmlChg, isAdrChg, isZipChg, isDOBChg, isWgeChg, isTtlChg);
+
+            update.ShowDialog();
+        }
+
+        private void updateForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (isExit)
+            {
+                Application.Exit();
+            }
+        }
+
+        // Garbage events, replaced with the leave events
+        /***********************************************************************************************/
+        private void txtOutID_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void txtOutFirst_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void txtOutLast_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+        /***********************************************************************************************/
+
+        // Calls the popYearDay function when the index is changed
+        /***********************************************************************************************/
+        private void cboYear_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            popYearDay();
+        }
+
+        private void cboMonth_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            popYearDay();
+        }
+        /***********************************************************************************************/
+
+        // Populates the day combo box based on if the year is a leap year and if the selected month has 30 or 31 days.
+        /***********************************************************************************************/
+        private void popYearDay()
+        {
+            strMonth = (string)cboMonth.SelectedItem;
+
+            bool is31Month = false;
+            bool is30Month = false;
+
+            switch (strMonth)
+            {
+                case "Jan":
+                case "Mar":
+                case "May":
+                case "Jul":
+                case "Aug":
+                case "Oct":
+                case "Dec":
+                    is31Month = true;
+                    break;
+                case "Apr":
+                case "Jun":
+                case "Sep":
+                case "Nov":
+                    is30Month = true;
+                    break;
+            }
+            this.cboDay.Items.Clear();
+
+            intYear = (int)cboYear.SelectedItem;
+
+            isLeap = DateTime.IsLeapYear(intYear);
+
+            if (isLeap && strMonth == "Feb")
+            {
+                for (int k = 0; k < 29; k++)
+                {
+                    cboDay.Items.Add(k + 1);
+                }
+            }
+            else if (!isLeap && strMonth == "Feb")
+            {
+                for (int k = 0; k < 28; k++)
+                {
+                    cboDay.Items.Add(k + 1);
+                }
+            }
+            else if (is30Month)
+            {
+                for (int k = 0; k < 30; k++)
+                {
+                    cboDay.Items.Add(k + 1);
+                }
+            }
+            else if (is31Month)
+            {
+                for (int k = 0; k < 31; k++)
+                {
+                    cboDay.Items.Add(k + 1);
+                }
+            }
+        }
+        /***********************************************************************************************/
+    }
+}
