@@ -1,0 +1,287 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.Linq;
+using System.Text;
+using System.Windows.Forms;
+using System.Data.SqlClient;
+
+namespace login
+{
+    public partial class addForm : Form
+    {
+        private bool isExit = true;
+
+        public addForm()
+        {
+            InitializeComponent();
+        }
+
+        private void btnReturn_Click(object sender, EventArgs e)
+        {
+            isExit = false;
+
+            this.Close();
+        }
+
+        private void btnAdd_Click(object sender, EventArgs e)
+        {
+            // Declare local variables
+            string strEmpID;
+            string strFirst;
+            string strLast;
+            string strPhone;
+            string strEmail;
+            string strAddress;
+            string strZip;
+            DateTime dtDOB;
+            string strTitle;
+            decimal decWage;
+            bool isEmpty = false;
+
+            if (txtEmpID.Text == "")
+            {
+                isEmpty = true;
+                txtEmpID.BackColor = Color.MistyRose;
+                ast1.Visible = true;
+            }
+            if (txtEmpFirst.Text == "")
+            {
+                isEmpty = true;
+                txtEmpFirst.BackColor = Color.MistyRose;
+                ast2.Visible = true;
+            }
+            if (txtEmpLast.Text == "")
+            {
+                isEmpty = true;
+                txtEmpLast.BackColor = Color.MistyRose;
+                ast3.Visible = true;
+            }
+            if (txtEmpPhone.Text == "")
+            {
+                isEmpty = true;
+                txtEmpPhone.BackColor = Color.MistyRose;
+                ast4.Visible = true;
+            }
+            if (txtEmpEmail.Text == "")
+            {
+                isEmpty = true;
+                txtEmpEmail.BackColor = Color.MistyRose;
+                ast5.Visible = true;
+            }
+            if (txtEmpAddress.Text == "")
+            {
+                isEmpty = true;
+                txtEmpAddress.BackColor = Color.MistyRose; 
+                ast6.Visible = true;
+            }
+            if (txtEmpZip.Text == "")
+            {
+                isEmpty = true;
+                txtEmpZip.BackColor = Color.MistyRose;
+                ast7.Visible = true;
+            }
+            if (txtEmpDOB.Text == "")
+            {
+                isEmpty = true;
+                txtEmpDOB.BackColor = Color.MistyRose;
+                ast8.Visible = true;
+            }
+            if (txtEmpTitle.Text == "")
+            {
+                isEmpty = true;
+                txtEmpTitle.BackColor = Color.MistyRose;
+                ast10.Visible = true;
+            }
+            if (txtEmpWage.Text == "")
+            {
+                isEmpty = true;
+                txtEmpWage.BackColor = Color.MistyRose;
+                ast9.Visible = true;
+            }
+
+            string connectionString = "Data Source=UAM-CIS1\\SQLEXPRESS; Initial Catalog=SEM_PRO_WEYSHAM; Integrated Security=True";
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+
+                strEmpID = txtEmpID.Text;                
+
+                bool idExists = false;
+
+                // create a command to check if the username exists
+                using (SqlCommand IDCheck = new SqlCommand("select count(*) from employee where emp_id = @EmpID", connection))
+                {
+                    IDCheck.Parameters.Add("@EmpID", SqlDbType.Char, 3).Value = strEmpID;
+                    idExists = (int)IDCheck.ExecuteScalar() > 0;
+                }
+
+                if (idExists)
+                {
+                    MessageBox.Show("Employee ID already taken, enter a new employee id.", "Employee ID is Taken", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+
+                    txtEmpID.Clear();
+
+                    txtEmpID.Focus();
+                }
+            }
+            if (!isEmpty)
+            {
+                strEmpID = txtEmpID.Text;
+                strFirst = txtEmpFirst.Text;
+                strLast = txtEmpLast.Text;
+                strPhone = txtEmpPhone.Text;
+                strEmail = txtEmpEmail.Text;
+                strAddress = txtEmpAddress.Text;
+                strZip = txtEmpZip.Text;
+                strTitle = txtEmpTitle.Text;
+                decWage = decimal.Parse(txtEmpWage.Text);
+
+                dtDOB = DateTime.Parse(txtEmpDOB.Text);
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    bool idExists = false;
+
+                    // create a command to check if the username exists
+                    using (SqlCommand IDCheck = new SqlCommand("select count(*) from employee where emp_id = @EmpID", connection))
+                    {
+                        IDCheck.Parameters.Add("@EmpID", SqlDbType.Char, 3).Value = strEmpID;
+                        idExists = (int)IDCheck.ExecuteScalar() > 0;
+                    }
+
+                    if (idExists)
+                    {
+                        MessageBox.Show("Employee ID already taken, enter a new employee id.", "Employee ID is Taken", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+
+                        txtEmpID.Clear();
+
+                        txtEmpID.Focus();
+                    }
+                    else
+                    {
+                        SqlCommand myInsert = new SqlCommand("INSERT INTO employee VALUES(@EmpID, @First, @Last, @Phone, @eMail, @Zip, @Address, @Wage, @Title, @DOB)", connection);
+                        myInsert.Parameters.Add("@EmpID", SqlDbType.Char, 3).Value = strEmpID;
+                        myInsert.Parameters.Add("@First", SqlDbType.VarChar, 20).Value = strFirst;
+                        myInsert.Parameters.Add("@Last", SqlDbType.VarChar, 20).Value = strLast;
+                        myInsert.Parameters.Add("@Phone", SqlDbType.Char, 10).Value = strPhone;
+                        myInsert.Parameters.Add("@Email", SqlDbType.VarChar, 35).Value = strEmail;
+                        myInsert.Parameters.Add("@Address", SqlDbType.VarChar, 35).Value = strAddress;
+                        myInsert.Parameters.Add("@Zip", SqlDbType.Char, 5).Value = strZip;
+                        myInsert.Parameters.Add("@DOB", SqlDbType.DateTime).Value = dtDOB;
+                        myInsert.Parameters.Add("@Title", SqlDbType.VarChar, 10).Value = strTitle;
+                        myInsert.Parameters.Add("@Wage", SqlDbType.Money).Value = decWage;
+
+                        myInsert.ExecuteNonQuery();
+
+                        var result = MessageBox.Show("Employee" + " " + strEmpID + " " + "has been added.", "Employee added", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+
+                        if (result == DialogResult.OK)
+                        {
+                            txtEmpID.Clear();
+                            txtEmpFirst.Clear();
+                            txtEmpLast.Clear();
+                            txtEmpPhone.Clear();
+                            txtEmpEmail.Clear();
+                            txtEmpZip.Clear();
+                            txtEmpAddress.Clear();
+                            txtEmpDOB.Clear();
+                            txtEmpTitle.Clear();
+                            txtEmpWage.Clear();
+
+                            txtEmpID.Focus();
+                        }
+                    }
+                    connection.Close();
+                }                
+            }
+            else
+            {
+                MessageBox.Show("Fill in the information marked in red.", "Fill Out Form", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        private void btnTerm_Click(object sender, EventArgs e)
+        {
+            var result = MessageBox.Show("Are you sure you wish to close the application?", "Confirm",MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
+            {
+                Application.Exit();
+            }
+        }
+
+        private void txtEmpID_TextChanged(object sender, EventArgs e)
+        {            
+            txtEmpID.BackColor = SystemColors.Window;
+            ast1.Visible = false;
+        }
+
+        private void txtEmpFirst_TextChanged(object sender, EventArgs e)
+        {
+            txtEmpFirst.BackColor = SystemColors.Window;
+            ast2.Visible = false;
+        }
+
+        private void txtEmpLast_TextChanged(object sender, EventArgs e)
+        {
+            txtEmpLast.BackColor = SystemColors.Window;
+            ast3.Visible = false;
+        }
+
+        private void txtEmpPhone_TextChanged(object sender, EventArgs e)
+        {
+            txtEmpPhone.BackColor = SystemColors.Window;
+            ast4.Visible = false;
+        }
+
+        private void txtEmpEmail_TextChanged(object sender, EventArgs e)
+        {
+            txtEmpEmail.BackColor = SystemColors.Window;
+            ast5.Visible = false;
+        }
+
+        private void txtEmpAddress_TextChanged(object sender, EventArgs e)
+        {
+            txtEmpAddress.BackColor = SystemColors.Window;
+            ast6.Visible = false;
+        }
+
+        private void txtEmpZip_TextChanged(object sender, EventArgs e)
+        {
+            txtEmpZip.BackColor = SystemColors.Window;
+            ast7.Visible = false;
+        }
+
+        private void txtEmpDOB_TextChanged(object sender, EventArgs e)
+        {
+            txtEmpDOB.BackColor = SystemColors.Window;
+            ast8.Visible = false;
+        }
+
+        private void txtEmpWage_TextChanged(object sender, EventArgs e)
+        {
+            txtEmpWage.BackColor = SystemColors.Window;
+            ast9.Visible = false;
+        }
+
+        private void txtEmpTitle_TextChanged(object sender, EventArgs e)
+        {
+            txtEmpTitle.BackColor = SystemColors.Window;
+            ast10.Visible = false;            
+        }
+
+        private void addForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (isExit)
+            {
+                Application.Exit();
+            }
+        }
+    }
+}
